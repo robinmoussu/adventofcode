@@ -6,7 +6,7 @@ fn main() -> io::Result<()> {
     let file = File::open("input-01-1.txt")?;
     let reader = BufReader::new(file);
 
-    let max: i64 = 
+    let mut all_max: Vec<i64> =
         reader
         .lines()
         .flat_map(|x| x)
@@ -17,10 +17,12 @@ fn main() -> io::Result<()> {
             .map(|x| x.parse::<i64>().unwrap())
             .sum()
         )
-        .max()
-        .unwrap();
+        .collect();
+    all_max.sort_by(|lhs, rhs| rhs.cmp(lhs)); // Sort by decreasing order
 
-    println!("day 1.1: {:?}", max);
+    let top_3: i64 = all_max.iter().take(3).sum();
+
+    println!("day 1.2: {:?}", top_3);
 
     Ok(())
 }

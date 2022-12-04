@@ -1,9 +1,17 @@
 use assert2::assert;
 
+#[derive(Clone, Copy, Debug)]
 enum Kind {
     Rock,
     Paper,
     Scissor,
+}
+
+#[derive(Clone, Copy, Debug)]
+enum Strategy {
+    Win,
+    Lose,
+    Draw,
 }
 
 fn score(yours: Kind, their: Kind) -> i32 {
@@ -19,11 +27,27 @@ fn score(yours: Kind, their: Kind) -> i32 {
     }
 }
 
+fn apply_strategy(their: Kind, strategy: Strategy) -> Kind {
+    use Kind::*;
+    use Strategy::*;
+
+    match (strategy, their) {
+        (Win, Rock) => Paper,
+        (Win, Paper) => Scissor,
+        (Win, Scissor) => Rock,
+        (Draw, x) => x,
+        (Lose, Paper) => Rock,
+        (Lose, Scissor) => Paper,
+        (Lose, Rock) => Scissor,
+    }
+}
+
 fn full_score(input: &str) -> i32 {
     input
         .lines()
         .map(|line| {
             use Kind::*;
+            use Strategy::*;
 
             let mut c = line.chars();
             let their = match c.next() {
@@ -33,13 +57,14 @@ fn full_score(input: &str) -> i32 {
                 x => panic!("invalid input: {:?}", x),
             };
             assert!(c.next() == Some(' '));
-            let yours = match c.next() {
-                Some('X') => Rock,
-                Some('Y') => Paper,
-                Some('Z') => Scissor,
+            let strategy = match c.next() {
+                Some('X') => Lose,
+                Some('Y') => Draw,
+                Some('Z') => Win,
                 x => panic!("invalid input: {:?}", x),
             };
             assert!(c.next().is_none());
+            let yours = apply_strategy(their, strategy);
             score(yours, their)
         })
         .sum()
@@ -79,7 +104,7 @@ mod tests {
             A Y
             B X
             C Z
-        "}) == 15
+        "}) == 12
         );
     }
 }

@@ -1,28 +1,85 @@
-use itertools::Itertools;
-use std::fs::File;
-use std::io::{self, prelude::*, BufReader};
+use assert2::assert;
 
-fn main() -> io::Result<()> {
-    let file = File::open("input-01-1.txt")?;
-    let reader = BufReader::new(file);
+enum Kind {
+    Rock,
+    Paper,
+    Scissor,
+}
 
-    let mut all_max: Vec<i64> =
-        reader
+fn score(yours: Kind, their: Kind) -> i32 {
+    use Kind::*;
+    (match yours {
+        Rock => 1,
+        Paper => 2,
+        Scissor => 3,
+    }) + match (yours, their) {
+        (Rock, Scissor) | (Paper, Rock) | (Scissor, Paper) => 6,
+        (Rock, Rock) | (Paper, Paper) | (Scissor, Scissor) => 3,
+        (Scissor, Rock) | (Rock, Paper) | (Paper, Scissor) => 0,
+    }
+}
+
+fn full_score(input: &str) -> i32 {
+    input
         .lines()
-        .flat_map(|x| x)
-        .group_by(|e| !e.is_empty())
-        .into_iter()
-        .flat_map(|(key, group)| key.then(||group))
-        .map(|group| group
-            .map(|x| x.parse::<i64>().unwrap())
-            .sum()
-        )
-        .collect();
-    all_max.sort_by(|lhs, rhs| rhs.cmp(lhs)); // Sort by decreasing order
+        .map(|line| {
+            use Kind::*;
 
-    let top_3: i64 = all_max.iter().take(3).sum();
+            let mut c = line.chars();
+            let their = match c.next() {
+                Some('A') => Rock,
+                Some('B') => Paper,
+                Some('C') => Scissor,
+                x => panic!("invalid input: {:?}", x),
+            };
+            assert!(c.next() == Some(' '));
+            let yours = match c.next() {
+                Some('X') => Rock,
+                Some('Y') => Paper,
+                Some('Z') => Scissor,
+                x => panic!("invalid input: {:?}", x),
+            };
+            assert!(c.next().is_none());
+            score(yours, their)
+        })
+        .sum()
+}
 
-    println!("day 1.2: {:?}", top_3);
+fn main() {
+    println!(
+        "day 2 part 1: {:?}",
+        full_score(include_str!("../input-02.txt"))
+    );
+}
 
-    Ok(())
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use assert2::assert;
+    use indoc::indoc;
+
+    #[test]
+    fn test_score() {
+        use Kind::*;
+        assert!(score(Rock, Rock) == 1 + 3);
+        assert!(score(Rock, Paper) == 1 + 0);
+        assert!(score(Rock, Scissor) == 1 + 6);
+        assert!(score(Paper, Rock) == 2 + 6);
+        assert!(score(Paper, Paper) == 2 + 3);
+        assert!(score(Paper, Scissor) == 2 + 0);
+        assert!(score(Scissor, Rock) == 3 + 0);
+        assert!(score(Scissor, Paper) == 3 + 6);
+        assert!(score(Scissor, Scissor) == 3 + 3);
+    }
+
+    #[test]
+    fn test_example() {
+        assert!(
+            full_score(indoc! {"
+            A Y
+            B X
+            C Z
+        "}) == 15
+        );
+    }
 }
